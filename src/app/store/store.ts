@@ -583,7 +583,7 @@ export class GameStore {
             const lastTileAlpha = xYArray[xYArray.length -1].xy[0]
             const lastTileNum = parseInt(xYArray[xYArray.length -1].xy[1])
             const upArr = this.checkUp(firstTileAlpha, firstTileNum)
-            const downArr = this.checkUp(lastTileAlpha, lastTileNum)
+            const downArr = this.checkDown(lastTileAlpha, lastTileNum)
             const wordString = `${upArr.map((x: TurnTileXY) => 
                 (x.letter)).join('')}${xYArray.map((x: TurnTileXY) => 
                     (x.letter)).join('')}}${downArr.map((x: TurnTileXY) => (x.letter)).join('')}`;
@@ -614,10 +614,81 @@ export class GameStore {
         //TODO:
         //check to see if tiles are placed horizontally
         } else if (xYArray.length > 0 && this.checkX(xYArray)) {
+            const xLineScores: XLineScoreObj[] = []
+            const yLineScores: YLineScoreObj[] = []
+
+            //evaluate word validity, atk & def scores for all vertical lines of turn
+            for(const turnTileXY of xYArray) {
+                let yLineScoreAtk = 0
+                let yLineScoreDef = 0
+                const tileAlpha = turnTileXY.xy[0]
+                const tileNum = turnTileXY.xy[1]
+                const upArr = this.checkUp(tileAlpha, parseInt(tileNum))
+                const downArr = this.checkDown(tileAlpha, parseInt(tileNum))
+                const wordString = `${upArr.map((x: TurnTileXY) => 
+                    (x.letter)).join('')}${turnTileXY.letter}${downArr.map((x: TurnTileXY) => (x.letter)).join('')}`;
+                    if (wordlist.english.includes(wordString)) {
+                        const wordTileArray = [...upArr, turnTileXY, ...upArr]
+                        for (const wordTile of wordTileArray) {
+                            if (wordTile.type === 'atk') {
+                                yLineScoreAtk += this.evaluateLetterScore(wordTile)
+                            } else if (wordTile.type === 'def') {
+                                yLineScoreDef += this.evaluateLetterScore(wordTile)
+                            } 
+                        }
+                        for (const wordTile of wordTileArray) {
+                            yLineScoreAtk = this[`${wordTile.xy[0]}_${wordTile.xy[1]}`].wrdMod(yLineScoreAtk)
+                            yLineScoreDef = this[`${wordTile.xy[0]}_${wordTile.xy[1]}`].wrdMod(yLineScoreDef)
+                        }
+                        const yLineScoreObj = <YLineScoreObj>{yLine: parseInt(tileNum), atkScore: yLineScoreAtk, defScore: yLineScoreDef}
+                        yLineScores.push(yLineScoreObj)
+                    } else {
+                        return {xLines: [], yLines: []}
+                    }
+                    if (yLineScoreAtk + yLineScoreDef === 0 && wordString.length > 1) {
+                        return {xLines: [], yLines: []}
+                    }
+    
+            }
+
+            //evaluate word validity, atk & def scores for single horizontal line of turn
+            let xLineScoreAtk = 0
+            let xLineScoreDef = 0
+            const firstTileAlpha = xYArray[0].xy[0]
+            const firstTileNum = parseInt(xYArray[0].xy[1])
+            const lastTileAlpha = xYArray[xYArray.length -1].xy[0]
+            const lastTileNum = parseInt(xYArray[xYArray.length -1].xy[1])
+            const leftArr = this.checkleft(firstTileAlpha, firstTileNum)
+            const rightArr = this.checkright(lastTileAlpha, lastTileNum)
+            const wordString = `${leftArr.map((x: TurnTileXY) => 
+                (x.letter)).join('')}${xYArray.map((x: TurnTileXY) => 
+                    (x.letter)).join('')}}${rightArr.map((x: TurnTileXY) => (x.letter)).join('')}`;
+            if (wordlist.english.includes(wordString)) {
+                const wordTileArray = [...leftArr, ...xYArray, ...rightArr]
+                for (const wordTile of wordTileArray) {
+                    if (wordTile.type === 'atk') {
+                        xLineScoreAtk += this.evaluateLetterScore(wordTile)
+                    } else if (wordTile.type === 'def') {
+                        xLineScoreDef += this.evaluateLetterScore(wordTile)
+                    } 
+                }
+                for (const wordTile of wordTileArray) {
+                    xLineScoreAtk = this[`${wordTile.xy[0]}_${wordTile.xy[1]}`].wrdMod(xLineScoreAtk)
+                    xLineScoreDef = this[`${wordTile.xy[0]}_${wordTile.xy[1]}`].wrdMod(xLineScoreDef)
+                }
+                const xLineScoreObj = <XLineScoreObj>{xLine: firstTileAlpha, atkScore: xLineScoreAtk, defScore: xLineScoreDef}
+                xLineScores.push(xLineScoreObj)
+            } else {
+                return {xLines: [], yLines: []}
+            }
+            if (xLineScoreAtk + xLineScoreDef === 0 && wordString.length > 1) {
+                return {xLines: [], yLines: []}
+            }
 
         }
         const scoreObj = <TurnScoreObj>{xLines: [], yLines: []}
             return scoreObj
+
         
     }
     
