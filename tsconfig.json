@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "noImplicitReturns": true,
+    // "useDefineForClassFields": true,
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -17,10 +19,11 @@
         "name": "next"
       }
     ],
+    
     "paths": {
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/store/store.ts", "__tests__/store.test.ts", "src/app/store/storejs.js"],
   "exclude": ["node_modules"]
 }
