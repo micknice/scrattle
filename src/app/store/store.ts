@@ -3,6 +3,7 @@ import { tileIdToXYArray } from '../../../utils/utils'
 import { letterScores } from '../../../utils/letterScores'
 import wordlist from 'wordlist-english'
 import { numAlpha, alphaNum } from '../../../utils/alphaNum'
+import { letterDistro } from '../../../utils/letterDistro'
 
 type Tile = {letter: string, type: 'atk' | 'def' | ''}
 type TurnTile = {xy: string, letter: string, type: 'atk' | 'def' | ''}
@@ -13,6 +14,7 @@ type YLineScoreObj = {yLine: number, atkScore: number, defScore: number}
 type TurnScoreObj = {xLines: XLineScoreObj[], yLines: YLineScoreObj[]}
 
 export class GameStore {
+    activePlayer: number
     p1Rack: Tile[]
     p1Turn: TurnTile[]
     p1HP: number
@@ -249,10 +251,11 @@ export class GameStore {
     o_15:BoardCell
     
     constructor(
-        p1HP: any = 100,
-        p2HP: any = 100,
+        p1HP: number = 100,
+        p2HP: number = 100,
         ) {
         makeAutoObservable(this)
+        this.activePlayer = 1
         this.letterBag = []
         //player stuff
         this.p1Rack = []
@@ -493,7 +496,7 @@ export class GameStore {
 
     [key: string]: any | string | Function
 
-    private drawRandomTile() {
+    private drawRandomTile(): Tile {
         const index = Math.floor(Math.random() * (this.letterBag.length -1))
         const clonedLetterBag = [...this.letterBag]
         const tile = clonedLetterBag[index]
@@ -502,10 +505,24 @@ export class GameStore {
         return tile
     }
 
-    private initializeRacks() {
+    private initializeRacks(): void {
         for (let i = 0; i < 7; i++) {
             this.p1Rack.push(this.drawRandomTile())
             this.p2Rack.push(this.drawRandomTile())
+        }
+    }
+    private initializeLetterBag(): void {
+        for (const letter of letterDistro) {
+            for (let i = 0; i < letter[1]; i++) {
+                const roll = Math.floor(Math.random())
+                if (roll < 0.5) {
+                    const defTile: Tile = {letter: letter[0], type: 'def'}
+                    this.letterBag.push(defTile)
+                } else {
+                    const atkTile: Tile = {letter: letter[0], type: 'atk'}
+                    this.letterBag.push(atkTile)
+                }
+            }
         }
     }
     private checkY(xYArray: any[]): boolean {
@@ -765,9 +782,7 @@ export class GameStore {
         }
 
 
-    private checkValidDictionaryWord(word: string): boolean {
-        return false
-    }
+    
 
     private evaluateLetterScore(turnTileXY: TurnTileXY): number {
         const tileAlpha = turnTileXY.xy[0]
@@ -778,5 +793,45 @@ export class GameStore {
 
     }
     
+    takeTurn(player: number): void {
+        if (this.evaluateTurnValidGeometry(player)) {
+            let opponent
+            player === 1 ? opponent = 2 : opponent = 1 
+            const turnScoreObj = this.evaluateTurnScores(this[`p${player}Turn`])
+            for (const letter of this[`p${player}Turn`]) {
+                this[`${letter.xy}`].letter = letter.letter
+                this[`${letter.xy}`].type = letter.type
+                this[`${letter.xy}`].locked = true
+            }
+            const initDef =0
+            const initAtk = 0
+            const defArr = [...turnScoreObj.xLines.map(x => (x.defScore)), ...turnScoreObj.yLines.map(y => (y.defScore))]
+            const atkArr = [...turnScoreObj.xLines.map(x => (x.atkScore)), ...turnScoreObj.yLines.map(y => (y.atkScore))] 
+            const def = defArr.reduce((acc, curr) => acc + curr, initDef)
+            const atk = atkArr.reduce((acc, curr) => acc + curr, initAtk)
+            this[`p${player}DP`] = def
+            const effectiveAtk = atk - this[`p${opponent}DP`]
+            if (effectiveAtk > 0) {
+                this[`p${opponent}DP`] = 0
+                this[`p${opponent}HP`] = this[`p${opponent}HP`] - effectiveAtk 
+            } else {
+                this[`p${opponent}DP`] = this[`p${opponent}DP`] - atk 
+            }
+            this[`p${player}Turn`] = []
+            this.refillRack(player)
+            this.activePlayer = opponent
+        }
+    }
+
+    private refillRack(player: number): void {
+        if (this.letterBag.length > 0) {
+            const tilesToDraw = 7 - this[`p${player}rack`].length
+            for (let i = 0; i < tilesToDraw; i++) {
+                const tile = this.drawRandomTile()
+                this[`p${player}rack`].push(tile)
+
+            }
+        }
+    }
 }
 
