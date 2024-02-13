@@ -254,7 +254,6 @@ export class GameStore {
         p1HP: number = 100,
         p2HP: number = 100,
         ) {
-        makeAutoObservable(this)
         this.activePlayer = 1
         this.letterBag = []
         //player stuff
@@ -579,6 +578,7 @@ export class GameStore {
                 const wordString = `${leftArr.map((x: TurnTileXY) => 
                     (x.letter)).join('')}${turnTileXY.letter}${rightArr.map((x: TurnTileXY) => (x.letter)).join('')}`;
                 if (wordlist.english.includes(wordString)) {
+
                     const wordTileArray = [...leftArr, turnTileXY, ...rightArr]
                     for (const wordTile of wordTileArray) {
                         if (wordTile.type === 'atk') {
@@ -612,7 +612,7 @@ export class GameStore {
             const downArr = this.checkDown(lastTileAlpha, lastTileNum)
             const wordString = `${upArr.map((x: TurnTileXY) => 
                 (x.letter)).join('')}${xYArray.map((x: TurnTileXY) => 
-                    (x.letter)).join('')}}${downArr.map((x: TurnTileXY) => (x.letter)).join('')}`;
+                    (x.letter)).join('')}${downArr.map((x: TurnTileXY) => (x.letter)).join('')}`;
             if (wordlist.english.includes(wordString)) {
                 const wordTileArray = [...upArr, ...xYArray, ...downArr]
                 for (const wordTile of wordTileArray) {

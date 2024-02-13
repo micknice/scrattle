@@ -26,5 +26,6 @@ export const letterDistro: LetterDistro[] = [
     ['j', 1],
     ['x', 1],
     ['q', 1],
-    ['z', 1]
+    ['z', 1],
+    ['*', 2]
 ]
