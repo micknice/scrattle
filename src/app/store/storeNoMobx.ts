@@ -531,6 +531,7 @@ export class GameStore {
         this.initializeRacks()
     }
     private checkY(xYArray: TurnTileXY[]): boolean {
+        console.log(xYArray)
         const y1 = xYArray[0].xy[0]
         const check = xYArray.every((curr: TurnTileXY) => curr.xy[0] === y1)
         return check
@@ -543,9 +544,9 @@ export class GameStore {
 
     evaluateTurnValidGeometry(player: number): boolean {
         let xYArray: TurnTileXY[] = []
-        if (player = 1) {
+        if (player === 1) {
                 xYArray = this.p1Turn.map((turnTile: TurnTile) => (<TurnTileXY>{xy: tileIdToXYArray(turnTile.xy), letter: turnTile.letter}))
-            } else if (player = 2) {
+            } else if (player === 2) {
                 xYArray = this.p2Turn.map((turnTile: TurnTile) => (<TurnTileXY>{xy: tileIdToXYArray(turnTile.xy), letter: turnTile.letter}))
         } 
         const yCheck = this.checkY(xYArray)
@@ -567,6 +568,7 @@ export class GameStore {
             
             //evaluate word validity, atk & def scores for all horizontal lines of turn
             for(const turnTileXY of xYArray) {
+
                 let xLineScoreAtk = 0
                 let xLineScoreDef = 0
                 const tileAlpha = turnTileXY.xy[0]
@@ -600,7 +602,7 @@ export class GameStore {
                     return {xLines: [], yLines: []}
                 }
             }
-
+            // TODO: fix logic to check for in between tiles already placed
             //evaluate word validity, atk & def scores for single vertical line of turn
             let yLineScoreAtk = 0
             let yLineScoreDef = 0
@@ -613,6 +615,7 @@ export class GameStore {
             const wordString = `${upArr.map((x: TurnTileXY) => 
                 (x.letter)).join('')}${xYArray.map((x: TurnTileXY) => 
                     (x.letter)).join('')}${downArr.map((x: TurnTileXY) => (x.letter)).join('')}`;
+                    console.log(wordString, 'lllllll')
             if (wordlist.english.includes(wordString)) {
                 const wordTileArray = [...upArr, ...xYArray, ...downArr]
                 for (const wordTile of wordTileArray) {
@@ -809,6 +812,7 @@ export class GameStore {
             let opponent
             player === 1 ? opponent = 2 : opponent = 1 
             const turnScoreObj = this.evaluateTurnScores(this[`p${player}Turn`])
+            console.log(player, turnScoreObj, '%$#')
             for (const letter of this[`p${player}Turn`]) {
                 this[`${letter.xy}`].letter = letter.letter
                 this[`${letter.xy}`].type = letter.type
@@ -820,6 +824,7 @@ export class GameStore {
             const atkArr = [...turnScoreObj.xLines.map(x => (x.atkScore)), ...turnScoreObj.yLines.map(y => (y.atkScore))] 
             const def = defArr.reduce((acc, curr) => acc + curr, initDef)
             const atk = atkArr.reduce((acc, curr) => acc + curr, initAtk)
+            console.log(player, 'def:',def, 'atk:', atk, this.p1DP)
             this[`p${player}DP`] = def
             const effectiveAtk = atk - this[`p${opponent}DP`]
             if (effectiveAtk > 0) {
